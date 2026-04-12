@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React from "react"; // Removed { Activity } - that was the collision
 import Hero from "@/components/Hero";
 import Marquee from "@/components/Marquee";
 import Capabilities from "@/components/Capabilities";
@@ -9,14 +9,15 @@ import About from "@/components/About";
 import Footer from "@/components/Footer";
 import Travel from "@/components/Travel";
 
+// ADD THESE THREE LINES:
+import ActivityStats from "@/components/ActivityStats";
+import Tinker from "@/components/Tinker";
+import Projects from "@/components/Projects";
+
 export default function Portfolio() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
-      {/* Dynamic Background Glows */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/10 blur-[150px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 blur-[150px] rounded-full" />
-      </div>
+    <div className="relative min-h-screen overflow-x-hidden bg-[#020202]">
+      {/* ... (Background Glows) ... */}
 
       <main className="relative z-10 max-w-7xl mx-auto px-6">
         <Hero />
@@ -25,7 +26,8 @@ export default function Portfolio() {
         <Lab />
         <SystemStats />
         <About />
-        <Activity />
+        {/* These will now resolve because of the imports added above */}
+        <ActivityStats />
         <Tinker />
         <Projects />
         <Travel />

@@ -37,7 +37,7 @@ const ACTIVITIES = [
   },
 ];
 
-export default function Activity() {
+export default function ActivityStats() {
   return (
     <section className="mb-48">
       <div className="flex items-center gap-4 mb-12">
