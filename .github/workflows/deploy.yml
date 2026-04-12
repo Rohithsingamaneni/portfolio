@@ -1,7 +1,7 @@
 name: Deploy to GitHub Pages
 on:
   push:
-    branches: [develop]
+    branches: [develop] # Sticking with your preferred branch
 permissions:
   contents: read
   pages: write
@@ -9,6 +9,10 @@ permissions:
 jobs:
   build_site:
     runs-on: ubuntu-latest
+    # This tells all steps to run inside your project folder
+    defaults:
+      run:
+        working-directory: ./rohith-portfolio
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,7 +27,8 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./out"
+          # Note: path must be relative to the repo root
+          path: "./rohith-portfolio/out"
   deploy:
     needs: build_site
     runs-on: ubuntu-latest
