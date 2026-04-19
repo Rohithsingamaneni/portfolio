@@ -5,14 +5,14 @@ export default function Footer() {
       <p>© 2026 Rohith Singamaneni // Optimized for scale.</p>
       <div className="flex gap-8">
         <a
-          href="https://linkedin.com/in/rohithsingamaneni"
+          href="https://www.linkedin.com/in/rohithsingamaneni/"
           target="_blank"
           className="hover:text-blue-500 transition-colors"
         >
           LinkedIn
         </a>
         <a
-          href="https://github.com/singamanenirohith98"
+          href="https://github.com/Rohithsingamaneni"
           target="_blank"
           className="hover:text-blue-500 transition-colors"
         >

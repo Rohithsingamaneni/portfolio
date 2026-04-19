@@ -5,20 +5,19 @@ export default function About() {
       <h2 className="text-sm font-mono uppercase tracking-[0.5em] text-slate-600 mb-12">
         Beyond Deployment
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <h3 className="text-5xl font-bold text-white tracking-tighter leading-tight italic">
-          If it's a system, <br /> I'll tune it.
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+        <h3 className="text-4xl md:text-5xl font-bold text-white tracking-tighter leading-tight italic">
+          Engineering is <br className="hidden md:block" /> professional play.
         </h3>
-        <div className="space-y-6 text-xl text-slate-400 font-light">
+        <div className="space-y-6 text-xl text-slate-400 font-light leading-relaxed">
           <p>
-            Treating physical recovery with the same precision as system
-            latency—utilizing{" "}
-            <span className="text-blue-400">WHOOP biometrics</span> for training
-            optimization.
+            Whether it's optimizing search ranking at <strong>Apple</strong> or
+            building multi-modal RAG systems in my home lab, I'm driven by the
+            "What if?".
           </p>
           <p>
-            Spending weekends building{" "}
-            <span className="text-indigo-400">RAG applications</span> or
+            I treat my personal infrastructure with the same rigor as
+            production code—constantly tuning, optimizing, or simply
             context-switching with a Fender CD-60S acoustic session.
           </p>
         </div>
