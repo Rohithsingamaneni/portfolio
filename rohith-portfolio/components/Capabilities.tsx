@@ -14,13 +14,15 @@ export default function Capabilities() {
     <section id="capabilities" className="section-block scroll-reveal">
       <SectionEyebrow label="Architecture & Engineering" />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {capabilities.map((capability) => {
+        {capabilities.map((capability, index) => {
           const Icon = iconMap[capability.icon];
+          const trajectoryClass =
+            ["capability-card--a", "capability-card--b", "capability-card--c"][index] ?? "";
 
           return (
             <article
               key={capability.title}
-              className="signal-card surface-panel group relative min-h-[21rem] overflow-hidden p-7 transition-transform duration-300 hover:-translate-y-2 md:p-9"
+              className={`signal-card surface-panel group relative min-h-[21rem] overflow-hidden p-7 transition-transform duration-300 hover:-translate-y-2 md:p-9 ${trajectoryClass}`}
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,var(--color-accent-soft),transparent_35%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
               <div className="relative">

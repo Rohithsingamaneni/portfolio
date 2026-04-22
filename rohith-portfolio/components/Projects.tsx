@@ -28,7 +28,7 @@ export default function Projects() {
             </div>
           </div>
 
-          <div className="project-diagram min-h-[26rem] rounded-[2rem]">
+          <div className="project-diagram project-diagram-dramatic min-h-[26rem] rounded-[2rem]">
             <svg
               className="absolute inset-0 h-full w-full"
               viewBox="0 0 420 340"

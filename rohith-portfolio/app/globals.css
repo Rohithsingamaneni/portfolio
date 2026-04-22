@@ -119,10 +119,10 @@ button {
 }
 
 .display-title {
-  font-size: clamp(3.6rem, 11vw, 8.8rem);
-  line-height: 0.9;
+  font-size: clamp(2.4rem, 6.2vw, 4.6rem);
+  line-height: 0.95;
   font-weight: 800;
-  letter-spacing: -0.08em;
+  letter-spacing: -0.055em;
 }
 
 .surface-panel {
@@ -476,52 +476,61 @@ button {
   transform: translateY(0);
 }
 
-.motion-ready .scroll-reveal,
-.motion-ready .signal-card,
-.motion-ready .timeline-card,
-.motion-ready .timeline-card .tech-chip,
-.motion-ready .contact-signal-card {
-  opacity: 0;
-  filter: blur(14px);
-  transition:
-    opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
-    filter 900ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-}
+/* ------------------------------------------------------------------ */
+/* Binary intersection-observer reveal system (FALLBACK ONLY).         */
+/* Browsers with animation-timeline: view() get the continuous         */
+/* scroll-driven system below; here we gate the binary/transition      */
+/* system so the two systems never run on the same element             */
+/* simultaneously (which would cause double-transform / flash).        */
+/* ------------------------------------------------------------------ */
+@supports not (animation-timeline: view()) {
+  .motion-ready .scroll-reveal,
+  .motion-ready .signal-card,
+  .motion-ready .timeline-card,
+  .motion-ready .timeline-card .tech-chip,
+  .motion-ready .contact-signal-card {
+    opacity: 0;
+    filter: blur(14px);
+    transition:
+      opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+      filter 900ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
 
-.motion-ready .scroll-reveal {
-  transform: translateY(3.5rem) scale(0.985);
-}
+  .motion-ready .scroll-reveal {
+    transform: translateY(3.5rem) scale(0.985);
+  }
 
-.motion-ready .signal-card {
-  transform: translateY(3rem) scale(0.96) rotateX(6deg);
-}
+  .motion-ready .signal-card {
+    transform: translateY(3rem) scale(0.96) rotateX(6deg);
+  }
 
-.motion-ready .timeline-card {
-  transform: translateX(-2.75rem) scale(0.985);
-}
+  .motion-ready .timeline-card {
+    transform: translateX(-2.75rem) scale(0.985);
+  }
 
-.motion-ready .timeline-card:nth-child(even) {
-  transform: translateX(2.75rem) scale(0.985);
-}
+  .motion-ready .timeline-card:nth-child(even) {
+    transform: translateX(2.75rem) scale(0.985);
+  }
 
-.motion-ready .timeline-card .tech-chip {
-  transform: translateY(0.9rem);
-}
+  .motion-ready .timeline-card .tech-chip {
+    transform: translateY(0.9rem);
+  }
 
-.motion-ready .contact-signal-card {
-  transform: translateY(2.5rem) rotateX(8deg);
-}
+  .motion-ready .contact-signal-card {
+    transform: translateY(2.5rem) rotateX(8deg);
+  }
 
-.motion-ready .scroll-reveal.is-visible,
-.motion-ready .signal-card.is-visible,
-.motion-ready .timeline-card.is-visible,
-.motion-ready .timeline-card .tech-chip.is-visible,
-.motion-ready .contact-signal-card.is-visible {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0) translateX(0) rotateX(0) scale(1);
+  .motion-ready .scroll-reveal.is-visible,
+  .motion-ready .signal-card.is-visible,
+  .motion-ready .timeline-card.is-visible,
+  .motion-ready .timeline-card .tech-chip.is-visible,
+  .motion-ready .contact-signal-card.is-visible {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) translateX(0) rotateX(0) scale(1);
+  }
 }
 
 @keyframes section-reveal {
@@ -703,4 +712,781 @@ button {
     filter: none !important;
     transform: none !important;
   }
+
+  /* Moment A + Moment C neutralization: kill the cinematic flight-in
+     and deck-fan animations entirely so reduced-motion users see the
+     grids in their natural, settled positions. */
+  .capability-card--a,
+  .capability-card--b,
+  .capability-card--c,
+  .exp-card--a,
+  .exp-card--b,
+  .exp-card--c {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  /* Hero pin revert: collapse the 180vh stage and release the sticky
+     wrapper so the hero scrolls away at its natural height with no
+     pin behavior. */
+  .hero-stage {
+    min-height: 0 !important;
+  }
+  .hero-pin {
+    position: static !important;
+  }
+
+  /* Ensure hero layers and marquee breathe don't get stuck in
+     partially-translated end-states from scroll-timeline. */
+  .hero-status,
+  .hero-title,
+  .hero-surname-exit,
+  .hero-summary,
+  .hero-panel,
+  .marquee-band,
+  .marquee-band .marquee-word {
+    translate: 0 0 !important;
+    letter-spacing: unset !important;
+  }
+
+  /* Hide the scroll progress bar entirely in reduced-motion mode. */
+  html::before {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Choreographed theme transition                                      */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme-transitioning="true"] *,
+  html[data-theme-transitioning="true"] *::before,
+  html[data-theme-transitioning="true"] *::after {
+    transition-property: background-color, color, border-color, box-shadow, fill, stroke, outline-color !important;
+    transition-duration: 460ms !important;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Theme toggle press + icon stack choreography                        */
+/* ------------------------------------------------------------------ */
+.theme-toggle__thumb {
+  transition:
+    transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 360ms ease,
+    box-shadow 360ms ease,
+    color 360ms ease;
+}
+
+.theme-toggle__thumb--press {
+  transform: scale(0.9);
+}
+
+.theme-toggle__thumb--light.theme-toggle__thumb--press {
+  transform: translateX(2rem) scale(0.9);
+}
+
+.theme-toggle__icon-stack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+}
+
+.theme-toggle__icon {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.6) rotate(-14deg);
+  transition:
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-theme="dark"] .theme-toggle__icon--moon,
+html[data-theme="light"] .theme-toggle__icon--sun {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Refined :focus-visible ring                                         */
+/* ------------------------------------------------------------------ */
+:where(a, button, [role="button"], input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-background),
+    0 0 0 4px color-mix(in srgb, var(--color-accent) 80%, transparent);
+  border-radius: inherit;
+  transition: box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Moment 2 — Scroll progress bar                                     */
+/* ------------------------------------------------------------------ */
+/* A 2px accent-colored line pinned to the top of the viewport that   */
+/* fills left-to-right as the user scrolls the document. Base state   */
+/* is unconditionally scaleX(0) so unsupported browsers render an     */
+/* invisible element (never a bar stuck at 100%). The scaleX          */
+/* animation is attached via a separate @supports block so only       */
+/* modern browsers with scroll-timeline animate it.                   */
+/* ------------------------------------------------------------------ */
+html::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent) 0%,
+    var(--color-accent-strong) 100%
+  );
+  transform-origin: left center;
+  transform: scaleX(0);
+  z-index: 100;
+  pointer-events: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html::before {
+      animation: scroll-progress linear forwards;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+@keyframes scroll-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Hero pin stage (Moment A)                                          */
+/* ------------------------------------------------------------------ */
+/* On md+, the outer .hero-stage gets an extra ~80vh of scroll runway  */
+/* beyond the inner pinned content's height. The inner .hero-pin      */
+/* wrapper is position:sticky so it stays fixed at top:0 while the   */
+/* browser scrolls through that runway — giving the capability cards  */
+/* a full viewport of scroll in which to fly in. On mobile we leave   */
+/* the stage height at its natural content height (no pin), so the    */
+/* hero scrolls past normally and capabilities still animate via      */
+/* view-timeline. The sticky rule is behind @supports so unsupported  */
+/* browsers fall back to the hero simply scrolling away.              */
+/* ------------------------------------------------------------------ */
+@media (min-width: 768px) {
+  .hero-stage {
+    min-height: 180vh;
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .hero-pin {
+        position: sticky;
+        top: 0;
+      }
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll-driven parallax layer                                       */
+/* ------------------------------------------------------------------ */
+/* Gated entirely behind @supports (animation-timeline: view()) AND   */
+/* (prefers-reduced-motion: no-preference). The binary-observer       */
+/* .motion-ready .scroll-reveal.is-visible system (above) is now      */
+/* gated behind @supports not (animation-timeline: view()) so the     */
+/* two systems are mutually exclusive and never fight for the same    */
+/* CSS property on the same element.                                  */
+/* ------------------------------------------------------------------ */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+
+    /* ---------- view-timeline definitions on section hosts --------- */
+    #top {
+      view-timeline-name: --hero-exit;
+      view-timeline-axis: block;
+    }
+
+    #experience {
+      view-timeline-name: --experience-view;
+      view-timeline-axis: block;
+    }
+
+    .project-diagram {
+      view-timeline-name: --diagram-view;
+      view-timeline-axis: block;
+    }
+
+    .marquee-band {
+      view-timeline-name: --marquee-view;
+      view-timeline-axis: block;
+    }
+
+    /* =============================================================== */
+    /* Moment 1 — Hero parallax exit (TRIPLE amplitude)                */
+    /* =============================================================== */
+    /* Every hero layer peels away at a different depth as the user    */
+    /* scrolls from the hero into the next section. Outer wrappers     */
+    /* with JS-driven `transform` (e.g., .hero-surname-parallax) are   */
+    /* untouched — we only use `translate:` (longhand, composes with   */
+    /* transform separately) on leaf elements. The on-load intro       */
+    /* animations (.hero-rise / .hero-title-in) finish at ~900ms       */
+    /* before exit can fire, so there's no temporal collision.         */
+
+    /* Conflict audit: .hero-status base rule sets animation: hero-rise
+       on load. We override animation-name here to hero-status-exit
+       AFTER load (fill-mode both), then drive via exit range. The
+       intro keyframes have already reached their end-state, so this
+       doesn't visibly pop. */
+
+    .hero-status {
+      animation-timeline: --hero-exit;
+      animation-range: exit 20% exit 100%;
+      animation-name: hero-status-exit;
+      animation-fill-mode: both;
+    }
+
+    @keyframes hero-status-exit {
+      0% {
+        translate: 0 0;
+        opacity: 1;
+        filter: blur(0);
+      }
+      70% {
+        filter: blur(0);
+        opacity: 0.75;
+      }
+      100% {
+        translate: 0 -120px;
+        opacity: 0;
+        filter: blur(3px);
+      }
+    }
+
+    .hero-title {
+      animation-timeline: --hero-exit;
+      animation-range: exit 0% exit 100%;
+      animation-name: hero-title-exit;
+      animation-fill-mode: both;
+    }
+
+    @keyframes hero-title-exit {
+      0% {
+        translate: 0 0;
+        filter: blur(0);
+      }
+      60% {
+        filter: blur(0);
+      }
+      100% {
+        translate: 0 -70px;
+        filter: blur(10px);
+      }
+    }
+
+    /* Surname inner span: outer .hero-surname-parallax carries a
+       JS-driven `transform` (pointer parallax), so we must not touch
+       transform. The inner .hero-surname-exit span has Tailwind's
+       -skew-x-6 set via `transform`, so we use ONLY `translate:`
+       here — no filter (filter on a skewed element can look odd). */
+    .hero-surname-exit {
+      animation-timeline: --hero-exit;
+      animation-range: exit 0% exit 100%;
+      animation-name: hero-surname-exit-kf;
+      animation-fill-mode: both;
+    }
+
+    @keyframes hero-surname-exit-kf {
+      0% {
+        translate: 0 0;
+      }
+      100% {
+        translate: 0 -180px;
+      }
+    }
+
+    .hero-summary {
+      animation-timeline: --hero-exit;
+      animation-range: exit 0% exit 100%;
+      animation-name: hero-summary-exit;
+      animation-fill-mode: both;
+    }
+
+    @keyframes hero-summary-exit {
+      0% {
+        translate: 0 0;
+        opacity: 1;
+        filter: blur(0);
+      }
+      50% {
+        filter: blur(0);
+      }
+      100% {
+        translate: 0 -80px;
+        opacity: 0.2;
+        filter: blur(6px);
+      }
+    }
+
+    .hero-panel {
+      animation-timeline: --hero-exit;
+      animation-range: exit 0% exit 100%;
+      animation-name: hero-panel-exit;
+      animation-fill-mode: both;
+    }
+
+    @keyframes hero-panel-exit {
+      0% {
+        translate: 0 0;
+        opacity: 1;
+      }
+      100% {
+        translate: 0 -40px;
+        opacity: 0.4;
+      }
+    }
+
+    /* =============================================================== */
+    /* Moment 3 — Section intro (scroll-driven, replaces binary)       */
+    /* =============================================================== */
+    /* Continuous entry animation tied to each section's own view.     */
+    /* This REPLACES the binary .is-visible reveal in supported        */
+    /* browsers (that rule is now gated behind                          */
+    /* `@supports not (animation-timeline: view())` above, so no       */
+    /* double-animation fight). `view()` anonymously uses the          */
+    /* element's own position vs the scrollport.                       */
+
+    .scroll-reveal {
+      animation: section-reveal-scroll linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+
+    @keyframes section-reveal-scroll {
+      0% {
+        opacity: 0;
+        transform: translateY(80px) scale(0.95);
+        filter: blur(8px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    /* Signal cards (About/Capabilities/Contact grids) — same smooth
+       continuous entry, slightly shallower range so cards settle
+       before the rest of the section completes. */
+    .signal-card {
+      animation: signal-card-reveal-scroll linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 65%;
+    }
+
+    @keyframes signal-card-reveal-scroll {
+      0% {
+        opacity: 0;
+        transform: translateY(60px) scale(0.92) rotateX(8deg);
+        filter: blur(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotateX(0);
+        filter: blur(0);
+      }
+    }
+
+    /* Contact signal cards — slight variation for visual rhythm. */
+    .contact-signal-card {
+      animation: contact-card-reveal-scroll linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+    }
+
+    @keyframes contact-card-reveal-scroll {
+      0% {
+        opacity: 0;
+        transform: translateY(50px) rotateX(10deg);
+        filter: blur(8px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) rotateX(0);
+        filter: blur(0);
+      }
+    }
+
+    /* =============================================================== */
+    /* Moment 4 (was) — Experience cards: alternating slide-in          */
+    /* Replaced by Moment C (deck-fan) below. Deck-fan defines its own  */
+    /* named view-timeline scoped to .timeline-deck so per-card         */
+    /* animations progress against the same shared timeline.            */
+    /* =============================================================== */
+
+    /* =============================================================== */
+    /* Moment A — Hero pin + Capability flight-in                      */
+    /* =============================================================== */
+    /* The Hero pins on md+ viewports (see .hero-stage min-height +    */
+    /* .hero-pin sticky rule in the media-query block outside the      */
+    /* @supports). While pinned, three Capability cards fly in from    */
+    /* off-screen trajectories (bottom-right, top-left, bottom-left)   */
+    /* and assemble into the 3-column grid. These per-card rules       */
+    /* override the general .signal-card entry (Moment 3) via          */
+    /* selector specificity — we set animation-name + animation-range  */
+    /* explicitly on the more-specific class.                          */
+
+    .capability-card--a,
+    .capability-card--b,
+    .capability-card--c {
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+    }
+
+    .capability-card--a {
+      animation-name: capability-flight-a;
+    }
+    .capability-card--b {
+      animation-name: capability-flight-b;
+    }
+    .capability-card--c {
+      animation-name: capability-flight-c;
+    }
+
+    @keyframes capability-flight-a {
+      0% {
+        opacity: 0;
+        transform: translate3d(60vw, 60vh, 0) rotate(22deg) scale(0.7);
+        filter: blur(12px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+
+    @keyframes capability-flight-b {
+      0% {
+        opacity: 0;
+        transform: translate3d(-50vw, -60vh, 0) rotate(-18deg) scale(0.75);
+        filter: blur(12px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+
+    @keyframes capability-flight-c {
+      0% {
+        opacity: 0;
+        transform: translate3d(-40vw, 70vh, 0) rotate(-14deg) scale(0.78);
+        filter: blur(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+
+    /* =============================================================== */
+    /* Moment C — Experience deck-fan                                   */
+    /* =============================================================== */
+    /* Cards start STACKED (overlapping, slight rotations) and fan     */
+    /* out to their natural grid positions as the section enters view. */
+    /* A named view-timeline on .timeline-deck means every card reads  */
+    /* from the same shared progress scalar, so they animate together  */
+    /* instead of independently (which would break the illusion).      */
+
+    .timeline-deck {
+      view-timeline-name: --timeline-deck;
+      view-timeline-axis: block;
+    }
+
+    .exp-card--a,
+    .exp-card--b,
+    .exp-card--c {
+      animation-timeline: --timeline-deck;
+      animation-range: entry 0% entry 60%;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+    }
+
+    .exp-card--a {
+      animation-name: exp-fan-a;
+    }
+    .exp-card--b {
+      animation-name: exp-fan-b;
+    }
+    .exp-card--c {
+      animation-name: exp-fan-c;
+    }
+
+    /* Initial state: translate the 2nd and 3rd cards UPWARD so they
+       visually overlap onto the first card's slot (since space-y-8
+       gives them natural vertical separation in flow). As the
+       timeline progresses, each card translates to zero — the deck
+       fans out. */
+    @keyframes exp-fan-a {
+      0% {
+        opacity: 0.2;
+        transform: translateY(40px) rotate(-5deg) scale(0.94);
+        filter: blur(5px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+
+    @keyframes exp-fan-b {
+      0% {
+        opacity: 0.2;
+        transform: translateY(-60px) translateX(20px) rotate(4deg) scale(0.94);
+        filter: blur(5px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+
+    @keyframes exp-fan-c {
+      0% {
+        opacity: 0.2;
+        transform: translateY(-140px) translateX(-18px) rotate(-3deg) scale(0.94);
+        filter: blur(5px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+
+    /* Tech chips stagger: each subsequent chip has a slightly later
+       start range, producing a cascade as the card enters view.
+       `animation-delay` doesn't compose with scroll timelines, so we
+       stagger via progressive `animation-range` start %. */
+    .timeline-card .tech-chip {
+      animation: chip-rise-scroll linear both;
+      animation-timeline: view();
+      animation-range: entry 15% entry 70%;
+    }
+
+    .timeline-card .tech-chip:nth-of-type(2) {
+      animation-range: entry 20% entry 70%;
+    }
+
+    .timeline-card .tech-chip:nth-of-type(3) {
+      animation-range: entry 25% entry 70%;
+    }
+
+    .timeline-card .tech-chip:nth-of-type(4) {
+      animation-range: entry 30% entry 70%;
+    }
+
+    .timeline-card .tech-chip:nth-of-type(5) {
+      animation-range: entry 35% entry 70%;
+    }
+
+    .timeline-card .tech-chip:nth-of-type(6) {
+      animation-range: entry 40% entry 75%;
+    }
+
+    .timeline-card .tech-chip:nth-of-type(n + 7) {
+      animation-range: entry 45% entry 80%;
+    }
+
+    @keyframes chip-rise-scroll {
+      0% {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* =============================================================== */
+    /* Experience timeline rail draw-in (preserved from prior pass)    */
+    /* =============================================================== */
+    /* Multi-animation: keep the existing timeline-flow bg-position
+       ticker, AND add a scroll-driven scaleY draw-in. */
+    .timeline-rail {
+      animation:
+        timeline-flow 5s linear infinite,
+        timeline-rail-draw 1ms linear both;
+      animation-timeline: auto, --experience-view;
+      animation-range: auto, entry 20% cover 50%;
+      transform-origin: top;
+    }
+
+    @keyframes timeline-rail-draw {
+      0% {
+        transform: scaleY(0);
+      }
+      100% {
+        transform: scaleY(1);
+      }
+    }
+
+    /* =============================================================== */
+    /* Moment 5 — Project diagram DRAMATIC lock-in                     */
+    /* =============================================================== */
+    /* Bigger amplitude than prior pass. Uses `scale:` (longhand) so
+       the child ::before conic-rotate spin and ::after ring remain
+       composable. */
+    .project-diagram {
+      animation-timeline: --diagram-view;
+      animation-range: entry 10% cover 40%;
+      animation-name: diagram-lock-dramatic;
+      animation-fill-mode: both;
+    }
+
+    @keyframes diagram-lock-dramatic {
+      0% {
+        scale: 0.82;
+        opacity: 0.2;
+        filter: blur(12px);
+      }
+      100% {
+        scale: 1;
+        opacity: 1;
+        filter: blur(0);
+      }
+    }
+
+    /* =============================================================== */
+    /* Moment 6 — Marquee bob + word breathe (letter-spacing, opacity) */
+    /* =============================================================== */
+    /* Keep the parent band's gentle Y bob from the prior pass.         */
+    .marquee-band {
+      animation-timeline: --marquee-view;
+      animation-range: cover 0% cover 100%;
+      animation-name: marquee-bob;
+      animation-fill-mode: both;
+    }
+
+    @keyframes marquee-bob {
+      0% {
+        translate: 0 -10px;
+      }
+      50% {
+        translate: 0 0;
+      }
+      100% {
+        translate: 0 -10px;
+      }
+    }
+
+    /* Letter-spacing + opacity breathe: opens up as the band crosses
+       the viewport center, collapses at the edges. Targeting
+       .marquee-word (a new class on each tech-name span) to avoid
+       matching bullet dots or other font-mono text elsewhere. */
+    .marquee-band .marquee-word {
+      animation-timeline: --marquee-view;
+      animation-range: cover 0% cover 100%;
+      animation-name: marquee-breathe;
+      animation-fill-mode: both;
+    }
+
+    @keyframes marquee-breathe {
+      0%,
+      100% {
+        letter-spacing: -0.06em;
+        opacity: 0.5;
+      }
+      50% {
+        letter-spacing: -0.02em;
+        opacity: 1;
+      }
+    }
+
+    /* =============================================================== */
+    /* Section eyebrow subtle horizontal parallax (preserved)          */
+    /* =============================================================== */
+    .section-eyebrow {
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+      animation-name: eyebrow-slide-in;
+      animation-fill-mode: both;
+    }
+
+    @keyframes eyebrow-slide-in {
+      0% {
+        translate: -8px 0;
+      }
+      100% {
+        translate: 0 0;
+      }
+    }
+
+  }
+}
+
+/* ================================================================== */
+/* Spring consistency — unify hover/press curves across the site      */
+/* ================================================================== */
+/* Reference: rauno.me uses cubic-bezier(0.22, 1, 0.36, 1) for the    */
+/* "settled spring" feel on hover transitions, and the overshoot     */
+/* curve cubic-bezier(0.34, 1.56, 0.64, 1) for press/release. We     */
+/* override only transition-timing-function on the interactives that */
+/* previously inherited generic `ease` — specific `transition`       */
+/* shorthands on individual components (see `.timeline-card`, the    */
+/* `a, button` default) are replaced below to keep duration/property */
+/* consistent.                                                        */
+
+.signal-pill,
+.signal-pill--secondary,
+.tech-chip,
+.nav-link,
+.theme-toggle,
+.surface-panel,
+.timeline-card,
+.glass-panel {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Press state — activate via :active pseudo (no JS). Deliberate
+   overshoot curve lets the release feel tactile, like a spring
+   rebound. */
+.signal-pill:active,
+.signal-pill--secondary:active,
+.tech-chip:active,
+.timeline-card:active {
+  transform: scale(0.985);
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-duration: 220ms;
+}
+
+/* Replace the timeline-card transition shorthand to embed the spring
+   curve at the property-group level so border-color, box-shadow, and
+   transform all resolve in the same physics-mimicking motion. */
+.timeline-card {
+  transition:
+    border-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }

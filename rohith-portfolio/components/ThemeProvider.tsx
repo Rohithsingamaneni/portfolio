@@ -25,6 +25,8 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 let themeSnapshot: Theme = "dark";
 const themeListeners = new Set<() => void>();
+let hasSyncedOnce = false;
+let transitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function applyTheme(nextTheme: Theme) {
   if (typeof window === "undefined") {
@@ -36,7 +38,32 @@ function applyTheme(nextTheme: Theme) {
   window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
 }
 
+function markTransitioning() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  document.documentElement.dataset.themeTransitioning = "true";
+
+  if (transitionTimeout !== null) {
+    clearTimeout(transitionTimeout);
+  }
+
+  transitionTimeout = setTimeout(() => {
+    delete document.documentElement.dataset.themeTransitioning;
+    transitionTimeout = null;
+  }, 520);
+}
+
 function setThemeSnapshot(nextTheme: Theme) {
+  if (hasSyncedOnce && typeof window !== "undefined") {
+    markTransitioning();
+  }
+
+  if (!hasSyncedOnce) {
+    hasSyncedOnce = true;
+  }
+
   themeSnapshot = nextTheme;
   applyTheme(nextTheme);
   themeListeners.forEach((listener) => listener());
