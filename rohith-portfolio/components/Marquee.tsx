@@ -1,47 +1,25 @@
-"use client";
-const TECH = [
-  "Spring Boot",
-  "Kafka",
-  "Snowflake",
-  "gRPC",
-  "RAG",
-  "PostgreSQL",
-  "WebFlux",
-  "LangChain",
-  "Ollama",
-  "Redis",
-];
+import { marqueeTech } from "@/lib/portfolio-data";
 
 export default function Marquee() {
   return (
-    <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] overflow-hidden mb-48 py-10 border-y border-white/5 bg-white/[0.01]">
-      <div className="flex whitespace-nowrap animate-infinite-scroll">
+    <div className="relative left-1/2 mb-28 w-screen -translate-x-1/2 overflow-hidden border-y border-[var(--color-rule)] bg-[var(--color-panel)] py-8 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] md:mb-36 md:py-10">
+      <div className="marquee-track flex whitespace-nowrap">
         {[...Array(2)].map((_, i) => (
-          <div key={i} className="flex gap-10 md:gap-20 items-center px-4 md:px-10">
-            {TECH.map((t) => (
-              <span
-                key={t}
-                className="text-3xl md:text-6xl font-bold text-white/80 hover:text-blue-400 transition-colors uppercase font-mono italic"
-              >
-                {t}
+          <div
+            key={i}
+            className="flex items-center gap-10 px-5 md:gap-20 md:px-10"
+          >
+            {marqueeTech.map((tech) => (
+              <span key={tech} className="flex items-center gap-10 md:gap-20">
+                <span className="font-mono text-4xl font-semibold uppercase italic tracking-[-0.06em] text-[var(--color-foreground)] opacity-80 md:text-6xl">
+                  {tech}
+                </span>
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" />
               </span>
             ))}
           </div>
         ))}
       </div>
-      <style jsx>{`
-        @keyframes scroll {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-infinite-scroll {
-          animation: scroll 30s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }
