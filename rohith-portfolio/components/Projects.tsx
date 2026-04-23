@@ -1,58 +1,92 @@
-"use client";
-import { motion } from "framer-motion";
+import SectionEyebrow from "@/components/SectionEyebrow";
+import { featuredProject } from "@/lib/portfolio-data";
 
 export default function Projects() {
   return (
-    <section className="mb-48">
-      <div className="flex items-center gap-4 mb-16">
-        <h2 className="text-sm font-mono uppercase tracking-[0.5em] text-slate-600">
-          Active_Projects
-        </h2>
-        <div className="h-[1px] flex-1 bg-white/5" />
-      </div>
+    // Outer stage provides scroll runway; inner pin stays sticky while the
+    // RAG diagram assembles itself one node/arrow at a time.
+    <section id="projects" className="project-stage section-block scroll-reveal">
+      <div className="project-pin">
+        <SectionEyebrow label="Active_Projects" />
 
-      <div className="group relative p-6 md:p-12 rounded-[2rem] md:rounded-[3rem] bg-[#050505] border border-white/5 overflow-hidden transition-all hover:border-blue-500/30">
-        <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-start">
-          <div className="lg:w-2/3">
-            <span className="inline-block px-3 py-1 rounded-md bg-blue-500/10 text-[10px] font-mono text-blue-400 uppercase tracking-widest mb-6">
-              AI-Powered Talent Analysis
-            </span>
-            <h3 className="text-3xl md:text-5xl font-bold text-white mb-4 md:mb-6 tracking-tighter italic">
-              AI Resume Intelligence
-            </h3>
-            <p className="text-xl text-slate-400 leading-relaxed mb-8">
-              A high-performance evaluator built with{" "}
-              <span className="text-blue-400 font-mono text-lg">
-                Spring Boot WebFlux
+        <article className="glass-panel relative overflow-hidden rounded-[2.5rem] p-6 md:rounded-[3rem] md:p-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_50%,var(--color-accent-soft),transparent_35%)]" />
+          <div className="relative grid gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <div>
+              <span className="mb-8 inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-accent-soft)] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+                {featuredProject.eyebrow}
               </span>
-              . Implementing a non-blocking pipeline that coordinates{" "}
-              <span className="text-white">document parsing</span>,
-              <span className="text-white">semantic retrieval</span>, and{" "}
-              <span className="text-white">local LLM inference</span> (Ollama)
-              to provide deep-context feedback on engineering candidates.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {["Spring Boot", "pgvector", "Ollama", "WebFlux", "LangChain", "LangGraph"].map((tech) => (
-                <span
-                  key={tech}
-                  className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-[10px] font-mono text-white font-semibold uppercase tracking-wider shadow-sm"
-                >
-                  {tech}
-                </span>
-              ))}
+              <h3 className="mb-7 max-w-xl text-5xl font-black italic leading-[0.95] tracking-[-0.08em] text-[var(--color-foreground)] md:text-7xl">
+                {featuredProject.title}
+              </h3>
+              <p className="max-w-3xl text-lg leading-9 text-[var(--color-muted)] md:text-xl">
+                {featuredProject.description}
+              </p>
+              <div className="mt-9 flex flex-wrap gap-3">
+                {featuredProject.technologies.map((tech) => (
+                  <span key={tech} className="tech-chip">
+                    {tech}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="lg:w-1/3 w-full aspect-[2/1] lg:aspect-square rounded-[2rem] bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border border-white/5 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
-            <div className="text-center">
-              <div className="text-6xl mb-4">📑</div>
-              <p className="text-xs font-mono text-slate-500 uppercase tracking-widest">
-                System Architecture: RAG-V1
+            <div className="project-diagram project-diagram-dramatic min-h-[26rem] rounded-[2rem]">
+              <svg
+                className="absolute inset-0 h-full w-full"
+                viewBox="0 0 420 340"
+                aria-hidden="true"
+              >
+                {/* pathLength="1" normalizes each path so stroke-dasharray:1
+                    and stroke-dashoffset:1 hide it completely; scroll-driven
+                    keyframes animate dashoffset 1→0 to draw each arrow. */}
+                <path
+                  className="arrow-path arrow-doc-rag"
+                  d="M 210 62 L 210 145"
+                  pathLength="1"
+                />
+                <path
+                  className="arrow-path arrow-rag-vec"
+                  d="M 210 145 L 98 220"
+                  pathLength="1"
+                />
+                <path
+                  className="arrow-path arrow-rag-llm"
+                  d="M 210 145 L 322 220"
+                  pathLength="1"
+                />
+                <path
+                  className="arrow-path arrow-vec-out"
+                  d="M 98 220 L 210 286"
+                  pathLength="1"
+                />
+                <path
+                  className="arrow-path arrow-llm-out"
+                  d="M 322 220 L 210 286"
+                  pathLength="1"
+                />
+              </svg>
+              <span className="diagram-node diagram-node--doc left-1/2 top-[14%] -translate-x-1/2">
+                DOC
+              </span>
+              <span className="diagram-node diagram-node--rag diagram-node--active left-1/2 top-[40%] -translate-x-1/2">
+                RAG
+              </span>
+              <span className="diagram-node diagram-node--vec left-[18%] top-[60%]">
+                VEC
+              </span>
+              <span className="diagram-node diagram-node--llm right-[18%] top-[60%]">
+                LLM
+              </span>
+              <span className="diagram-node diagram-node--out bottom-[12%] left-1/2 -translate-x-1/2">
+                OUT
+              </span>
+              <p className="absolute inset-x-8 top-[53%] text-center font-mono text-xs uppercase tracking-[0.32em] text-[var(--color-label)]">
+                {featuredProject.diagramLabel}
               </p>
             </div>
           </div>
-        </div>
+        </article>
       </div>
     </section>
   );

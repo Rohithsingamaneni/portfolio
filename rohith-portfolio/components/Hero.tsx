@@ -1,94 +1,261 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
-const STATUS_CYCLES = [
-  "Active @ Apple HQ",
-  "Optimizing RAG Pipelines",
-  "Architecting Microservices",
-  "Scaling Data Pipelines",
-];
+import { ArrowUpRight, MapPin, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import HeroBlob from "@/components/HeroBlob";
+import { heroContent, RESUME_HREF, socialLinks } from "@/lib/portfolio-data";
 
 export default function Hero() {
   const [statusIndex, setStatusIndex] = useState(0);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const springX = useSpring(mouseX, { stiffness: 100, damping: 30 });
-  const springY = useSpring(mouseY, { stiffness: 100, damping: 30 });
-
-  const rotateX = useTransform(springY, [0, 1000], [10, -10]);
-  const rotateY = useTransform(springX, [0, 1920], [-10, 10]);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const parallaxRef = useRef<HTMLSpanElement | null>(null);
+  const targetRef = useRef({ x: 0, y: 0 });
+  const currentRef = useRef({ x: 0, y: 0 });
+  const activeRef = useRef(false);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
     const interval = setInterval(
-      () => setStatusIndex((s) => (s + 1) % STATUS_CYCLES.length),
+      () =>
+        setStatusIndex(
+          (current) => (current + 1) % heroContent.statusCycles.length
+        ),
       3000
     );
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      clearInterval(interval);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    let rafId: number | null = null;
+
+    const applyTransform = (x: number, y: number) => {
+      const node = parallaxRef.current;
+      if (!node) return;
+      const rotateY = x * 1;
+      const rotateX = -y * 0.6;
+      const translateX = x * 6;
+      const translateY = y * 3;
+      node.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     };
-  }, [mouseX, mouseY]);
+
+    const tick = () => {
+      const target = targetRef.current;
+      const current = currentRef.current;
+      current.x += (target.x - current.x) * 0.12;
+      current.y += (target.y - current.y) * 0.12;
+      applyTransform(current.x, current.y);
+
+      const atRest =
+        Math.abs(target.x - current.x) < 0.001 &&
+        Math.abs(target.y - current.y) < 0.001 &&
+        Math.abs(current.x) < 0.001 &&
+        Math.abs(current.y) < 0.001;
+
+      if (atRest && target.x === 0 && target.y === 0) {
+        current.x = 0;
+        current.y = 0;
+        applyTransform(0, 0);
+        rafId = null;
+        return;
+      }
+
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    const ensureLoop = () => {
+      if (rafId === null) {
+        rafId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!activeRef.current) return;
+      const section = sectionRef.current;
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const nx = Math.max(-1, Math.min(1, (event.clientX - cx) / (rect.width / 2)));
+      const ny = Math.max(-1, Math.min(1, (event.clientY - cy) / (rect.height / 2)));
+      targetRef.current.x = nx;
+      targetRef.current.y = ny;
+      ensureLoop();
+    };
+
+    const handlePointerLeave = () => {
+      if (!activeRef.current) return;
+      targetRef.current.x = 0;
+      targetRef.current.y = 0;
+      ensureLoop();
+    };
+
+    const reset = () => {
+      targetRef.current.x = 0;
+      targetRef.current.y = 0;
+      currentRef.current.x = 0;
+      currentRef.current.y = 0;
+      if (parallaxRef.current) {
+        parallaxRef.current.style.transform = "";
+      }
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    };
+
+    const attach = () => {
+      const section = sectionRef.current;
+      if (!section) return;
+      section.addEventListener("pointermove", handlePointerMove);
+      section.addEventListener("pointerleave", handlePointerLeave);
+      activeRef.current = true;
+    };
+
+    const detach = () => {
+      const section = sectionRef.current;
+      if (section) {
+        section.removeEventListener("pointermove", handlePointerMove);
+        section.removeEventListener("pointerleave", handlePointerLeave);
+      }
+      activeRef.current = false;
+      reset();
+    };
+
+    const sync = () => {
+      const shouldEnable = !coarsePointer.matches && !reducedMotion.matches;
+      if (shouldEnable && !activeRef.current) {
+        attach();
+      } else if (!shouldEnable && activeRef.current) {
+        detach();
+      }
+    };
+
+    sync();
+
+    const handleCoarseChange = () => sync();
+    const handleReducedChange = () => sync();
+
+    coarsePointer.addEventListener("change", handleCoarseChange);
+    reducedMotion.addEventListener("change", handleReducedChange);
+
+    return () => {
+      coarsePointer.removeEventListener("change", handleCoarseChange);
+      reducedMotion.removeEventListener("change", handleReducedChange);
+      detach();
+    };
+  }, []);
 
   return (
-    <section className="relative min-h-[90vh] flex flex-col justify-center mb-48 perspective-1000">
-
-      <div className="relative z-10">
-        <motion.div className="flex items-center gap-4 mb-10 pt-32 lg:pt-0">
-          <div className="h-[1px] w-12 bg-blue-500/50" />
-          <div className="px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative h-2 w-2 rounded-full bg-blue-500"></span>
-            </span>
-            <span className="text-[10px] font-mono text-blue-400 uppercase tracking-widest">
-              {STATUS_CYCLES[statusIndex]}
-            </span>
-          </div>
-        </motion.div>
-
-        <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}>
-          <h1 className="text-6xl sm:text-7xl md:text-9xl font-bold text-white mb-8 md:mb-12 tracking-tighter leading-[0.8] drop-shadow-2xl">
-            ROHITH <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-600">
-              SINGAMANENI
-            </span>
-          </h1>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start md:items-end">
-          <div>
-            <p className="text-xl md:text-2xl text-slate-400 leading-relaxed font-light mb-8">
-              Engineering <span className="text-white">Distributed Resilience</span>{" "}
-              and <span className="text-white">AI Infrastructure</span> at Apple.
-              Focusing on gRPC pipelines and non-blocking RAG architectures.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <a href="/portfolio/resume.pdf" target="_blank" className="text-[#020202] bg-white hover:bg-blue-400 hover:text-white font-mono text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)]">
-                View Resume
-              </a>
-              <a href="https://github.com/Rohithsingamaneni" target="_blank" className="text-white hover:text-blue-400 font-mono text-xs uppercase tracking-widest border border-white/20 px-6 py-3 rounded-full hover:bg-white/5 transition-all">
-                GitHub
-              </a>
-              <a href="https://www.linkedin.com/in/rohithsingamaneni/" target="_blank" className="text-white hover:text-blue-400 font-mono text-xs uppercase tracking-widest border border-white/20 px-6 py-3 rounded-full hover:bg-white/5 transition-all">
-                LinkedIn
-              </a>
+    <section
+      ref={sectionRef}
+      id="top"
+      className="hero-stage relative mb-24 md:mb-28"
+    >
+      <div className="hero-pin hero-section relative flex min-h-[calc(100vh-9rem)] items-center py-16 md:py-20">
+        <HeroBlob />
+        <div className="grid w-full gap-12">
+        <div className="relative z-10 min-w-0">
+          <div className="hero-status mb-10 flex items-center gap-4">
+            <div className="h-px w-14 bg-[var(--color-accent)] opacity-60" />
+            <div className="signal-pill px-4 py-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-accent)] opacity-70" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" />
+              </span>
+              {heroContent.statusCycles[statusIndex]}
             </div>
           </div>
-          <div className="md:text-right">
-            <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-1">
-              Deployment Zone
-            </p>
-            <p className="text-sm font-mono text-white tracking-widest uppercase">
-              Sunnyvale, CA // 37.36° N, 122.03° W
-            </p>
+
+          <h1
+            className="hero-title mb-8 text-[clamp(3.15rem,13vw,12.2rem)] font-black uppercase leading-[0.78] tracking-[-0.1em] text-[var(--color-foreground)] md:mb-10"
+            style={{ perspective: "1200px" }}
+          >
+            {heroContent.firstName}
+            <br />
+            <span
+              ref={parallaxRef}
+              className="hero-surname-parallax inline-block will-change-transform"
+            >
+              <span className="hero-surname-exit inline-block origin-left -skew-x-6 text-[var(--color-accent-strong)]">
+                {heroContent.lastName}
+              </span>
+            </span>
+          </h1>
+
+          <p className="hero-summary max-w-3xl text-[1.35rem] leading-[1.75] text-[var(--color-muted)] md:text-[1.75rem]">
+            {heroContent.summary.intro}{" "}
+            <strong className="font-semibold text-[var(--color-foreground)]">
+              {heroContent.summary.emphasisOne}
+            </strong>{" "}
+            {heroContent.summary.middle}{" "}
+            <strong className="font-semibold text-[var(--color-foreground)]">
+              {heroContent.summary.emphasisTwo}
+            </strong>{" "}
+            {heroContent.summary.outro}
+          </p>
+
+          <div className="hero-actions mt-9 flex flex-wrap gap-4">
+            <a href={RESUME_HREF} target="_blank" className="signal-pill">
+              View Resume <ArrowUpRight size={14} />
+            </a>
+            {socialLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="signal-pill--secondary"
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
+
+        <aside className="hero-panel glass-panel relative max-w-5xl overflow-hidden rounded-[2.5rem] p-6 md:p-8">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[var(--color-accent-soft)] blur-3xl" />
+          <div className="relative space-y-8">
+            <div className="flex items-center gap-3 text-[var(--color-accent)]">
+              <Sparkles size={18} />
+              <span className="font-mono text-xs uppercase tracking-[0.32em]">
+                Current Signal
+              </span>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {heroContent.currentFocus.map((focus) => (
+                <div
+                  key={focus}
+                  className="rounded-2xl border border-[var(--color-rule)] bg-[var(--color-panel)] px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-[var(--color-foreground)]"
+                >
+                  {focus}
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-[1.75rem] border border-[var(--color-rule)] bg-[var(--color-panel)] p-5">
+              <div className="mb-2 flex items-center gap-2 text-[var(--color-label)]">
+                <MapPin size={16} />
+                <span className="font-mono text-[0.7rem] uppercase tracking-[0.3em]">
+                  {heroContent.locationLabel}
+                </span>
+              </div>
+              <p className="font-mono text-lg uppercase tracking-[0.16em] text-[var(--color-foreground)]">
+                {heroContent.location}
+              </p>
+              <p className="mt-1 font-mono text-sm uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                {heroContent.coordinates}
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
       </div>
     </section>
   );

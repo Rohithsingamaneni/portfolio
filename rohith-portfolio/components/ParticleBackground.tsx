@@ -1,114 +1,397 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+
+import { useEffect, useRef } from "react";
+
+type Particle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+};
+
+type PointerState = {
+  x: number;
+  y: number;
+  active: boolean;
+};
+
+type NoiseField = {
+  angleAt: (x: number, y: number, t: number) => number;
+};
+
+const GENERATIVE_SEED = 0xa04e4744;
+const NOISE_SPATIAL_SCALE = 0.0015;
+const NOISE_TIME_STEP = 0.0004;
+const NOISE_STEER_STRENGTH = 0.06;
+const NOISE_VELOCITY_DAMPING = 0.94;
+const DESKTOP_PARTICLE_CAP = 160;
+const LOW_TIER_PARTICLE_CAP = 70;
+const REDUCED_MOTION_PARTICLE_CAP = 52;
+const LOW_TIER_FRAME_INTERVAL_MS = 33;
+
+function createSeededRng(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function createNoiseField(seed: number): NoiseField {
+  const rng = createSeededRng(seed);
+  const tableSize = 256;
+  const mask = tableSize - 1;
+  const permutation = new Uint8Array(tableSize * 2);
+  const base = new Uint8Array(tableSize);
+
+  for (let i = 0; i < tableSize; i += 1) {
+    base[i] = i;
+  }
+  for (let i = tableSize - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = base[i];
+    base[i] = base[j];
+    base[j] = tmp;
+  }
+  for (let i = 0; i < tableSize * 2; i += 1) {
+    permutation[i] = base[i & mask];
+  }
+
+  const gradients = new Float32Array(tableSize * 2);
+  for (let i = 0; i < tableSize; i += 1) {
+    const angle = rng() * Math.PI * 2;
+    gradients[i * 2] = Math.cos(angle);
+    gradients[i * 2 + 1] = Math.sin(angle);
+  }
+
+  const fade = (u: number) => u * u * u * (u * (u * 6 - 15) + 10);
+  const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
+
+  const gradIndex = (ix: number, iy: number) =>
+    permutation[(permutation[ix & mask] + (iy & mask)) & mask];
+
+  const sample = (x: number, y: number) => {
+    const x0 = Math.floor(x);
+    const y0 = Math.floor(y);
+    const xf = x - x0;
+    const yf = y - y0;
+    const u = fade(xf);
+    const v = fade(yf);
+
+    const g00 = gradIndex(x0, y0) * 2;
+    const g10 = gradIndex(x0 + 1, y0) * 2;
+    const g01 = gradIndex(x0, y0 + 1) * 2;
+    const g11 = gradIndex(x0 + 1, y0 + 1) * 2;
+
+    const n00 = gradients[g00] * xf + gradients[g00 + 1] * yf;
+    const n10 = gradients[g10] * (xf - 1) + gradients[g10 + 1] * yf;
+    const n01 = gradients[g01] * xf + gradients[g01 + 1] * (yf - 1);
+    const n11 = gradients[g11] * (xf - 1) + gradients[g11 + 1] * (yf - 1);
+
+    return lerp(lerp(n00, n10, u), lerp(n01, n11, u), v);
+  };
+
+  return {
+    angleAt(x, y, t) {
+      // Sample two offset slices of the field so the angle evolves with t
+      // without introducing a full 3D noise implementation.
+      const a = sample(x, y + t);
+      const b = sample(x + 41.3, y - t + 17.7);
+      return Math.atan2(b, a) * 2;
+    },
+  };
+}
+
+function readMeshColors() {
+  const styles = getComputedStyle(document.documentElement);
+
+  return {
+    node:
+      styles.getPropertyValue("--color-node-canvas").trim() ||
+      "rgba(243,154,98,.76)",
+    line:
+      styles.getPropertyValue("--color-line-canvas").trim() ||
+      "rgba(243,154,98,.34)",
+  };
+}
+
+function classifyDeviceTier() {
+  const cores =
+    typeof navigator !== "undefined" && navigator.hardwareConcurrency
+      ? navigator.hardwareConcurrency
+      : 4;
+  return cores < 8 || window.innerWidth < 768;
+}
 
 export default function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!canvas) {
+      return;
+    }
 
-    let particles: any[] = [];
-    let animationFrameId: number;
-    let mouse = { x: -1000, y: -1000 };
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    const noiseField = createNoiseField(GENERATIVE_SEED);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    let particles: Particle[] = [];
+    let animationFrame = 0;
+    let meshColors = readMeshColors();
+    let pointer: PointerState = { x: 0, y: 0, active: false };
+    let isLowTier = classifyDeviceTier();
+    let noiseTime = 0;
+    let lastTimestamp = 0;
+    let lastDrawTimestamp = 0;
+
+    const initializeParticles = () => {
+      const desktopCap = Math.min(
+        DESKTOP_PARTICLE_CAP,
+        Math.max(84, Math.floor(window.innerWidth / 12))
+      );
+      const count = reducedMotion.matches
+        ? REDUCED_MOTION_PARTICLE_CAP
+        : isLowTier
+          ? Math.min(LOW_TIER_PARTICLE_CAP, desktopCap)
+          : desktopCap;
+
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        ...createMotionVector(reducedMotion.matches),
+        radius: Math.random() * 2.6 + 1.15,
+      }));
+    };
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initParticles();
+      isLowTier = classifyDeviceTier();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * ratio);
+      canvas.height = Math.floor(window.innerHeight * ratio);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      initializeParticles();
     };
 
-    const initParticles = () => {
-      particles = [];
-      const numParticles = Math.min(Math.floor(window.innerWidth / 10), 120);
-      const shapes = ['circle', 'square', 'triangle'];
-      
-      for (let i = 0; i < numParticles; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          radius: Math.random() * 2.5 + 1.5,
-          shape: shapes[Math.floor(Math.random() * shapes.length)]
-        });
+    const step = (now: number) => {
+      animationFrame = requestAnimationFrame(step);
+
+      if (lastTimestamp === 0) {
+        lastTimestamp = now;
+        lastDrawTimestamp = now;
       }
-    };
 
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; 
+      const rawDelta = now - lastTimestamp;
+      lastTimestamp = now;
+      // Clamp dt to avoid giant jumps after tab backgrounding.
+      const dt = Math.min(3, Math.max(0, rawDelta / 16.667));
 
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
+      if (isLowTier && now - lastDrawTimestamp < LOW_TIER_FRAME_INTERVAL_MS) {
+        return;
+      }
+      lastDrawTimestamp = now;
 
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const baseConnection = Math.min(220, Math.max(150, width * 0.105));
+      const connectionDistance = isLowTier ? baseConnection * 0.75 : baseConnection;
+      const connectionDistanceSquared = connectionDistance * connectionDistance;
 
-        const dx = mouse.x - p.x;
-        const dy = mouse.y - p.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 150) {
-          p.x -= dx * 0.03;
-          p.y -= dy * 0.03;
+      if (!reducedMotion.matches) {
+        noiseTime += NOISE_TIME_STEP * dt;
+      }
+
+      context.clearRect(0, 0, width, height);
+
+      particles.forEach((particle) => {
+        if (!reducedMotion.matches) {
+          const angle = noiseField.angleAt(
+            particle.x * NOISE_SPATIAL_SCALE,
+            particle.y * NOISE_SPATIAL_SCALE,
+            noiseTime
+          );
+          particle.vx =
+            particle.vx * NOISE_VELOCITY_DAMPING +
+            Math.cos(angle) * NOISE_STEER_STRENGTH * dt;
+          particle.vy =
+            particle.vy * NOISE_VELOCITY_DAMPING +
+            Math.sin(angle) * NOISE_STEER_STRENGTH * dt;
+
+          particle.x += particle.vx * dt;
+          particle.y += particle.vy * dt;
+
+          applyPointerForce(particle, pointer, reducedMotion.matches, dt);
         }
 
-        ctx.beginPath();
-        if (p.shape === 'circle') {
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        } else if (p.shape === 'square') {
-          ctx.rect(p.x - p.radius, p.y - p.radius, p.radius * 2, p.radius * 2);
-        } else if (p.shape === 'triangle') {
-          ctx.moveTo(p.x, p.y - p.radius);
-          ctx.lineTo(p.x + p.radius, p.y + p.radius);
-          ctx.lineTo(p.x - p.radius, p.y + p.radius);
-          ctx.closePath();
-        }
-        ctx.fill();
+        if (particle.x < -20) particle.x = width + 20;
+        if (particle.x > width + 20) particle.x = -20;
+        if (particle.y < -20) particle.y = height + 20;
+        if (particle.y > height + 20) particle.y = -20;
+
+        context.beginPath();
+        context.fillStyle = meshColors.node;
+        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        context.fill();
       });
 
-      // Batch line drawing for massive performance gain
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; 
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
+      context.beginPath();
+      context.strokeStyle = meshColors.line;
+      context.lineWidth = 1.2;
+
+      for (let i = 0; i < particles.length; i += 1) {
+        for (let j = i + 1; j < particles.length; j += 1) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
-          const dist = dx * dx + dy * dy;
-          if (dist < 12000) {
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
+          const distance = dx * dx + dy * dy;
+
+          if (distance < connectionDistanceSquared) {
+            context.moveTo(particles[i].x, particles[i].y);
+            context.lineTo(particles[j].x, particles[j].y);
           }
         }
       }
-      ctx.stroke();
 
-      animationFrameId = requestAnimationFrame(draw);
+      context.stroke();
+      drawPointerTethers(context, particles, pointer, meshColors.line, meshColors.node);
     };
 
-    window.addEventListener('resize', resize);
-    const handleMouseMove = (e: MouseEvent) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
+    const updateColors = () => {
+      meshColors = readMeshColors();
     };
-    
-    window.addEventListener('mousemove', handleMouseMove);
+
+    const handlePointerMove = (event: PointerEvent) => {
+      pointer = {
+        x: event.clientX,
+        y: event.clientY,
+        active: true,
+      };
+    };
+
+    const handlePointerLeave = () => {
+      pointer = { ...pointer, active: false };
+    };
+
+    const observer = new MutationObserver(updateColors);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerleave", handlePointerLeave);
+    reducedMotion.addEventListener("change", resize);
 
     resize();
-    draw();
+    animationFrame = requestAnimationFrame(step);
 
     return () => {
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerleave", handlePointerLeave);
+      reducedMotion.removeEventListener("change", resize);
+      observer.disconnect();
+      cancelAnimationFrame(animationFrame);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none z-0" />;
+  return (
+    <div
+      className="particle-background pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      aria-hidden="true"
+      data-testid="particle-background"
+    >
+      <div className="ambient-layer ambient-layer--one" />
+      <div className="ambient-layer ambient-layer--two" />
+      <div className="particle-depth" />
+      <div className="dot-matrix" data-testid="particle-dot-matrix" />
+      <canvas ref={canvasRef} className="mesh-canvas" data-testid="particle-canvas" />
+    </div>
+  );
+}
+
+function createMotionVector(isReducedMotion: boolean) {
+  if (isReducedMotion) {
+    return { vx: 0, vy: 0 };
+  }
+
+  const angle = Math.random() * Math.PI * 2;
+  const speed = Math.random() * 0.28 + 0.2;
+
+  return {
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+  };
+}
+
+function applyPointerForce(
+  particle: Particle,
+  pointer: PointerState,
+  isReducedMotion: boolean,
+  dt: number
+) {
+  if (!pointer.active || isReducedMotion) {
+    return;
+  }
+
+  const dx = particle.x - pointer.x;
+  const dy = particle.y - pointer.y;
+  const distanceSquared = dx * dx + dy * dy;
+  const radius = 190;
+
+  if (distanceSquared <= 0.01 || distanceSquared > radius * radius) {
+    return;
+  }
+
+  const distance = Math.sqrt(distanceSquared);
+  const force = (1 - distance / radius) * 2.8 * dt;
+
+  particle.x += (dx / distance) * force;
+  particle.y += (dy / distance) * force;
+}
+
+function drawPointerTethers(
+  context: CanvasRenderingContext2D,
+  particles: Particle[],
+  pointer: PointerState,
+  lineColor: string,
+  nodeColor: string
+) {
+  if (!pointer.active) {
+    return;
+  }
+
+  const radius = 175;
+  const radiusSquared = radius * radius;
+
+  context.beginPath();
+  context.strokeStyle = lineColor;
+  context.lineWidth = 1.45;
+
+  particles.forEach((particle) => {
+    const dx = particle.x - pointer.x;
+    const dy = particle.y - pointer.y;
+    const distanceSquared = dx * dx + dy * dy;
+
+    if (distanceSquared < radiusSquared) {
+      context.moveTo(pointer.x, pointer.y);
+      context.lineTo(particle.x, particle.y);
+    }
+  });
+
+  context.stroke();
+  context.beginPath();
+  context.fillStyle = nodeColor;
+  context.arc(pointer.x, pointer.y, 3.5, 0, Math.PI * 2);
+  context.fill();
 }
