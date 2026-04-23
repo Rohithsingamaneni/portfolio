@@ -1797,3 +1797,274 @@ html::before {
     animation: none !important;
   }
 }
+
+/* =============================================================== */
+/* Scroll signal — a traveling accent node that walks the page     */
+/* =============================================================== */
+/* Themed Leonardi-style "scroll character": a glowing pulse node  */
+/* traces a horizontal track at the bottom of the viewport, passing */
+/* six section checkpoints. A short trail of dimmer nodes lags       */
+/* behind for motion continuity. Each section's label fades in       */
+/* within its own scroll band so the traveller announces where it is.*/
+
+.scroll-signal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 1rem;
+  height: 2rem;
+  z-index: 30;
+  pointer-events: none;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .scroll-signal {
+    display: block;
+  }
+}
+
+.scroll-signal__track {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: calc(50% + 0.1rem);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-rule) 160%, transparent) 15%,
+    color-mix(in srgb, var(--color-rule) 160%, transparent) 85%,
+    transparent
+  );
+  transform: translateY(-50%);
+}
+
+.scroll-signal__dot {
+  position: absolute;
+  top: calc(50% + 0.1rem);
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+  transform: translateY(-50%);
+}
+
+.scroll-signal__traveller {
+  position: absolute;
+  top: calc(50% + 0.1rem);
+  left: 5%;
+  width: 0;
+  height: 0;
+  transform: translateY(-50%);
+}
+
+.scroll-signal__pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  box-shadow:
+    0 0 16px 2px color-mix(in srgb, var(--color-accent) 70%, transparent),
+    0 0 30px 4px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  animation: scroll-signal-pulse-breathe 1.8s ease-in-out infinite;
+}
+
+.scroll-signal__trail {
+  position: absolute;
+  top: calc(50% + 0.1rem);
+  left: 5%;
+  border-radius: 999px;
+  background: var(--color-accent);
+  transform: translateY(-50%);
+}
+
+.scroll-signal__trail--one {
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  opacity: 0.55;
+}
+
+.scroll-signal__trail--two {
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  opacity: 0.32;
+}
+
+.scroll-signal__trail--three {
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  opacity: 0.18;
+}
+
+.scroll-signal__label-stack {
+  position: absolute;
+  left: 0;
+  bottom: 0.9rem;
+  width: 0;
+  height: 0;
+}
+
+.scroll-signal__label {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.scroll-signal__label--hero { opacity: 1; }
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-signal__traveller {
+      animation: scroll-signal-travel linear forwards;
+      animation-timeline: scroll(root);
+    }
+    .scroll-signal__trail--one {
+      animation: scroll-signal-trail-one linear forwards;
+      animation-timeline: scroll(root);
+    }
+    .scroll-signal__trail--two {
+      animation: scroll-signal-trail-two linear forwards;
+      animation-timeline: scroll(root);
+    }
+    .scroll-signal__trail--three {
+      animation: scroll-signal-trail-three linear forwards;
+      animation-timeline: scroll(root);
+    }
+    .scroll-signal__dot {
+      animation: scroll-signal-dot-wake linear forwards;
+      animation-timeline: scroll(root);
+    }
+    .scroll-signal__dot--hero      { animation-range: 0% 5%; }
+    .scroll-signal__dot--capabilities { animation-range: 19% 26%; }
+    .scroll-signal__dot--experience   { animation-range: 37% 44%; }
+    .scroll-signal__dot--projects     { animation-range: 57% 64%; }
+    .scroll-signal__dot--about        { animation-range: 75% 82%; }
+    .scroll-signal__dot--contact      { animation-range: 90% 97%; }
+
+    .scroll-signal__label {
+      animation: linear forwards;
+      animation-timeline: scroll(root);
+    }
+    .scroll-signal__label--hero         { animation-name: scroll-label-hero; }
+    .scroll-signal__label--capabilities { animation-name: scroll-label-capabilities; }
+    .scroll-signal__label--experience   { animation-name: scroll-label-experience; }
+    .scroll-signal__label--projects     { animation-name: scroll-label-projects; }
+    .scroll-signal__label--about        { animation-name: scroll-label-about; }
+    .scroll-signal__label--contact      { animation-name: scroll-label-contact; }
+  }
+}
+
+@keyframes scroll-signal-travel {
+  from { left: 5%; }
+  to   { left: 95%; }
+}
+
+@keyframes scroll-signal-trail-one {
+  0%   { left: 5%; }
+  3%   { left: 5%; }
+  100% { left: 92.3%; }
+}
+
+@keyframes scroll-signal-trail-two {
+  0%   { left: 5%; }
+  6%   { left: 5%; }
+  100% { left: 89.6%; }
+}
+
+@keyframes scroll-signal-trail-three {
+  0%   { left: 5%; }
+  10%  { left: 5%; }
+  100% { left: 86%; }
+}
+
+@keyframes scroll-signal-pulse-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.18); }
+}
+
+@keyframes scroll-signal-dot-wake {
+  0% {
+    background: color-mix(in srgb, var(--color-accent) 45%, transparent);
+    box-shadow: none;
+  }
+  100% {
+    background: var(--color-accent);
+    box-shadow: 0 0 10px 0 color-mix(in srgb, var(--color-accent) 60%, transparent);
+  }
+}
+
+@keyframes scroll-label-hero {
+  0%   { opacity: 1; }
+  14%  { opacity: 1; }
+  18%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes scroll-label-capabilities {
+  0%   { opacity: 0; }
+  14%  { opacity: 0; }
+  18%  { opacity: 1; }
+  32%  { opacity: 1; }
+  36%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes scroll-label-experience {
+  0%   { opacity: 0; }
+  32%  { opacity: 0; }
+  36%  { opacity: 1; }
+  52%  { opacity: 1; }
+  56%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes scroll-label-projects {
+  0%   { opacity: 0; }
+  52%  { opacity: 0; }
+  56%  { opacity: 1; }
+  72%  { opacity: 1; }
+  76%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes scroll-label-about {
+  0%   { opacity: 0; }
+  72%  { opacity: 0; }
+  76%  { opacity: 1; }
+  88%  { opacity: 1; }
+  92%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes scroll-label-contact {
+  0%   { opacity: 0; }
+  88%  { opacity: 0; }
+  92%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-signal {
+    display: none !important;
+  }
+}
+

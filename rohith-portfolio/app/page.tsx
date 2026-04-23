@@ -14,6 +14,7 @@ import MagneticLayer from "@/components/MagneticLayer";
 import ParticleBackground from "@/components/ParticleBackground";
 import ParticleHoverLayer from "@/components/ParticleHoverLayer";
 import ScrollAnimator from "@/components/ScrollAnimator";
+import ScrollSignal from "@/components/ScrollSignal";
 import SectionRevealBurst from "@/components/SectionRevealBurst";
 import SmoothScroll from "@/components/SmoothScroll";
 
@@ -27,6 +28,7 @@ export default function Portfolio() {
       <MagneticLayer />
       <Cursor />
       <SmoothScroll />
+      <ScrollSignal />
       <TopNav />
 
       <main className="relative z-10 mx-auto w-[min(1220px,calc(100%-1.5rem))] px-0 pb-16 pt-28 md:pt-32">
