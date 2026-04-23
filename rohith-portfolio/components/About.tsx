@@ -1,9 +1,11 @@
+import ChapterMarker from "@/components/ChapterMarker";
 import SectionEyebrow from "@/components/SectionEyebrow";
 import { aboutContent } from "@/lib/portfolio-data";
 
 export default function About() {
   return (
     <section id="about" className="section-block scroll-reveal">
+      <ChapterMarker label="IV — THE HUMAN LAYER" />
       <SectionEyebrow label="Beyond Deployment" />
       <div className="grid gap-10 md:grid-cols-[0.9fr_1.1fr] md:items-start">
         <h3 className="display-title max-w-[9ch] text-balance italic text-[var(--color-foreground)]">

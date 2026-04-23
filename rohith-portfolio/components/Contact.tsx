@@ -1,10 +1,12 @@
 import { Radio, Sparkles, Workflow } from "lucide-react";
+import ChapterMarker from "@/components/ChapterMarker";
 import SectionEyebrow from "@/components/SectionEyebrow";
 import { contactContent } from "@/lib/portfolio-data";
 
 export default function Contact() {
   return (
     <section id="contact" className="section-block scroll-reveal">
+      <ChapterMarker label="V — SIGNAL" />
       <SectionEyebrow label={contactContent.eyebrow} />
 
       <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">

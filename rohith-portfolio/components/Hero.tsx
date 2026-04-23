@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, MapPin, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import HeroBlob from "@/components/HeroBlob";
 import { heroContent, RESUME_HREF, socialLinks } from "@/lib/portfolio-data";
 
 export default function Hero() {
@@ -157,6 +158,7 @@ export default function Hero() {
       className="hero-stage relative mb-24 md:mb-28"
     >
       <div className="hero-pin hero-section relative flex min-h-[calc(100vh-9rem)] items-center py-16 md:py-20">
+        <HeroBlob />
         <div className="grid w-full gap-12">
         <div className="relative z-10 min-w-0">
           <div className="hero-status mb-10 flex items-center gap-4">

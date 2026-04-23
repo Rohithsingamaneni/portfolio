@@ -1490,3 +1490,310 @@ html::before {
     box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* === Projects pinned scroll-assembly === */
+/* Cuberto-style "scroll-as-sequencer" beat: the Projects section pins for
+   ~1 viewport of scroll, and within that runway the RAG pipeline diagram
+   assembles itself node-by-node and arrow-by-arrow. Base arrow styles
+   live outside @supports so browsers without animation-timeline still
+   see a complete diagram; the scroll-driven reveal is layered on top.   */
+
+/* Base arrow geometry — fully visible by default for graceful fallback. */
+.arrow-path {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-opacity: 0.7;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  transition: stroke-opacity 400ms ease;
+}
+
+@media (min-width: 768px) {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      /* Pin geometry — one viewport of runway so the assembly has room. */
+      .project-stage {
+        min-height: 200vh;
+        view-timeline-name: --project-stage;
+        view-timeline-axis: block;
+      }
+
+      .project-pin {
+        position: sticky;
+        top: 4rem;
+      }
+
+      /* Start hidden so the scroll-driven keyframe can reveal via
+         dashoffset 1 → 0. */
+      .arrow-path {
+        stroke-dashoffset: 1;
+      }
+
+      /* Node sequence — DOC first, then RAG, then VEC+LLM, then OUT. */
+      .diagram-node--doc {
+        animation: node-appear linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 0% contain 15%;
+      }
+      .diagram-node--rag {
+        animation: node-appear linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 25% contain 40%;
+      }
+      .diagram-node--vec {
+        animation: node-appear linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 50% contain 60%;
+      }
+      .diagram-node--llm {
+        animation: node-appear linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 50% contain 60%;
+      }
+      .diagram-node--out {
+        animation: node-appear linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 70% contain 85%;
+      }
+
+      /* Arrows draw in the gaps between node reveals so the pipeline
+         feels like a causal chain rather than a simultaneous reveal. */
+      .arrow-doc-rag {
+        animation: arrow-draw linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 15% contain 28%;
+      }
+      .arrow-rag-vec {
+        animation: arrow-draw linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 40% contain 55%;
+      }
+      .arrow-rag-llm {
+        animation: arrow-draw linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 40% contain 55%;
+      }
+      .arrow-vec-out {
+        animation: arrow-draw linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 60% contain 75%;
+      }
+      .arrow-llm-out {
+        animation: arrow-draw linear both;
+        animation-timeline: --project-stage;
+        animation-range: contain 60% contain 75%;
+      }
+
+      /* Amp the central RAG node's glow while the pipeline is actively
+         wiring up. Scoped to --project-stage + contain 40-70% so the
+         pulse only fires during the assembly window. This overrides the
+         existing ease-in-out node-pulse on .diagram-node--active via
+         source-order + higher specificity (.diagram-node--rag added). */
+      .diagram-node--rag.diagram-node--active {
+        animation: rag-pulse-strong linear infinite;
+        animation-timeline: --project-stage;
+        animation-range: contain 40% contain 70%;
+      }
+    }
+  }
+}
+
+@keyframes node-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes arrow-draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.7;
+  }
+}
+
+@keyframes rag-pulse-strong {
+  0%,
+  100% {
+    box-shadow: 0 0 30px -10px var(--color-accent);
+  }
+  50% {
+    box-shadow: 0 0 60px -6px var(--color-accent);
+  }
+}
+
+/* Reduced-motion neutralization for the pinned assembly: release the
+   sticky pin, collapse the runway, render every node in its settled
+   pose, and show arrows fully drawn at rest. */
+@media (prefers-reduced-motion: reduce) {
+  .project-stage {
+    min-height: 0;
+  }
+  .project-pin {
+    position: static;
+  }
+  .arrow-path {
+    stroke-dashoffset: 0;
+    opacity: 0.7;
+  }
+  .diagram-node--doc,
+  .diagram-node--rag,
+  .diagram-node--vec,
+  .diagram-node--llm,
+  .diagram-node--out {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* === Scrollytelling chapter markers + atmospheric shift === */
+/* Inter-section chapter dividers sit above each SectionEyebrow at     */
+/* About and Contact, drawing in their flanking rules and easing the   */
+/* label in from a blurred, translated state as the marker crosses the */
+/* viewport. A very subtle scroll-driven background-position shift on  */
+/* <body> amplifies the sense of atmospheric depth without redrawing.  */
+.chapter-marker {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 4rem 0 2rem;
+}
+
+.chapter-marker__rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-rule) 20%,
+    var(--color-rule) 80%,
+    transparent
+  );
+  transform-origin: center;
+}
+
+.chapter-marker__label {
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(0.72rem, 1.1vw, 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.48em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .chapter-marker {
+      animation: chapter-marker-enter linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+    }
+
+    .chapter-marker__rule {
+      animation: chapter-rule-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+      transform: scaleX(0);
+    }
+
+    .chapter-marker__label {
+      animation: chapter-label-breathe linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+    }
+  }
+}
+
+@keyframes chapter-marker-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes chapter-rule-draw {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes chapter-label-breathe {
+  0% {
+    letter-spacing: 0.8em;
+  }
+  100% {
+    letter-spacing: 0.48em;
+  }
+}
+
+/* Atmospheric depth: the body background layers (hero-glow, secondary  */
+/* glow, base gradient) drift vertically as the user scrolls through    */
+/* the page. Kept deliberately subtle — ambient, not dramatic.          */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    body {
+      animation: atmospheric-depth linear forwards;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+@keyframes atmospheric-depth {
+  0% {
+    background-position:
+      50% 0%,
+      50% 0%,
+      50% 0%,
+      50% 0%;
+  }
+  100% {
+    background-position:
+      50% 100%,
+      50% 100%,
+      50% 100%,
+      50% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-marker {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  .chapter-marker__rule {
+    transform: scaleX(1) !important;
+    animation: none !important;
+  }
+  .chapter-marker__label {
+    animation: none !important;
+  }
+  body {
+    animation: none !important;
+  }
+}
