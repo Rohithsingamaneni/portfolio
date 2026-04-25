@@ -143,3 +143,39 @@ export const contactContent = {
   description:
     "Open to senior engineering roles, technical leadership, and interesting AI or distributed systems collaborations.",
 } as const;
+
+export const education = [
+  {
+    degree: "Computer Science",
+    university: "California State University East Bay",
+    gpa: "3.8 GPA",
+    date: "Graduated",
+  },
+] as const;
+
+export const otherProjects = [
+  {
+    title: "FoodX",
+    description: "A microservices-based food ordering system with API Gateway, Eureka discovery, and reactive PostgreSQL handling high-concurrency order flows.",
+    tech: ["Java 23", "Spring Boot", "WebFlux", "Redis", "R2DBC"],
+    link: "https://github.com/Rohithsingamaneni/foodX",
+  },
+  {
+    title: "Shop-Ease",
+    description: "Enterprise e-commerce backend built on Spring Boot microservices, featuring secure payment gateways and aggressive Redis caching strategies.",
+    tech: ["Spring Boot", "Microservices", "PostgreSQL", "Docker"],
+    link: "https://github.com/Rohithsingamaneni/shop-ease",
+  },
+  {
+    title: "Spring Security Auth",
+    description: "A production-ready stateless authentication server implementing JWT validation, role-based access control, and robust Spring Security filters.",
+    tech: ["Spring Security", "JWT", "Java", "OAuth2"],
+    link: "https://github.com/Rohithsingamaneni/springboot-jwt-auth",
+  },
+  {
+    title: "GraphQL Spring Boot",
+    description: "An enterprise GraphQL API implementation over Spring Boot, optimizing data fetching efficiency by eliminating over-fetching on relational datasets.",
+    tech: ["GraphQL", "Spring Boot", "Java", "JPA"],
+    link: "https://github.com/Rohithsingamaneni/graphql-spring-boot",
+  },
+] as const;

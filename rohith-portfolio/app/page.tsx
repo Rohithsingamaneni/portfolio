@@ -5,19 +5,18 @@ import Hero from "@/components/Hero";
 import Marquee from "@/components/Marquee";
 import Capabilities from "@/components/Capabilities";
 import Experience from "@/components/Experience";
+import Education from "@/components/Education";
 import About from "@/components/About";
 import Projects from "@/components/Projects";
+import OtherProjects from "@/components/OtherProjects";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
-import Cursor from "@/components/Cursor";
 import MagneticLayer from "@/components/MagneticLayer";
 import ParticleBackground from "@/components/ParticleBackground";
 import ParticleHoverLayer from "@/components/ParticleHoverLayer";
 import ScrollAnimator from "@/components/ScrollAnimator";
 import ScrollSignal from "@/components/ScrollSignal";
 import SectionRevealBurst from "@/components/SectionRevealBurst";
-import SmoothScroll from "@/components/SmoothScroll";
-
 export default function Portfolio() {
   return (
     <div className="page-shell">
@@ -26,8 +25,6 @@ export default function Portfolio() {
       <ParticleHoverLayer />
       <ScrollAnimator />
       <MagneticLayer />
-      <Cursor />
-      <SmoothScroll />
       <ScrollSignal />
       <TopNav />
 
@@ -36,7 +33,9 @@ export default function Portfolio() {
         <Marquee />
         <Capabilities />
         <Experience />
+        <Education />
         <Projects />
+        <OtherProjects />
         <About />
         <Contact />
       </main>

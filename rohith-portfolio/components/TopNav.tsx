@@ -9,19 +9,21 @@ export default function TopNav() {
       <div className="mx-auto w-[min(1220px,calc(100%-1.25rem))]">
         <div className="glass-panel rounded-[1.75rem] px-4 py-3 md:px-6">
           <div className="flex items-center justify-between gap-4">
-            <nav className="flex min-w-0 flex-1 items-center justify-start gap-2 overflow-x-auto md:justify-center">
+            <nav className="flex min-w-0 flex-1 items-center justify-start gap-2 overflow-x-auto pb-1 md:justify-center">
               {navItems.map((item) => (
                 <a
                   key={item.href}
                   href={item.href}
-                  className="nav-link"
+                  className="nav-link shrink-0"
                 >
                   {item.label}
                 </a>
               ))}
             </nav>
 
-            <ThemeToggle />
+            <div className="shrink-0">
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </div>

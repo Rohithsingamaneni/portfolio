@@ -2,7 +2,7 @@ import { marqueeTech } from "@/lib/portfolio-data";
 
 export default function Marquee() {
   return (
-    <div className="marquee-band relative left-1/2 mb-28 w-screen -translate-x-1/2 overflow-hidden border-y border-[var(--color-rule)] bg-[var(--color-panel)] py-8 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] md:mb-36 md:py-10">
+    <div className="marquee-band relative left-1/2 mb-28 w-screen -translate-x-1/2 overflow-hidden border-y border-[var(--color-rule)] bg-transparent py-8 md:mb-36 md:py-10">
       <div className="marquee-track flex whitespace-nowrap">
         {[...Array(2)].map((_, i) => (
           <div

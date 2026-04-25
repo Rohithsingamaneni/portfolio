@@ -173,16 +173,18 @@ export default function Hero() {
           </div>
 
           <h1
-            className="hero-title mb-8 text-[clamp(3.15rem,13vw,12.2rem)] font-black uppercase leading-[0.78] tracking-[-0.1em] text-[var(--color-foreground)] md:mb-10"
+            className="hero-title mb-8 text-[clamp(2.1rem,9.5vw,12.2rem)] font-black uppercase leading-[0.78] tracking-[-0.1em] text-[var(--color-foreground)] md:mb-10 md:text-[clamp(3.15rem,13vw,12.2rem)]"
             style={{ perspective: "1200px" }}
           >
-            {heroContent.firstName}
+            <span className="inline-block animate-[hero-title-in_2.2s_cubic-bezier(0.22,1,0.36,1)_0s_both]">
+              {heroContent.firstName}
+            </span>
             <br />
             <span
               ref={parallaxRef}
               className="hero-surname-parallax inline-block will-change-transform"
             >
-              <span className="hero-surname-exit inline-block origin-left -skew-x-6 text-[var(--color-accent-strong)]">
+              <span className="hero-surname-exit inline-block origin-left -skew-x-6 text-[var(--color-accent-strong)] animate-[hero-title-in_2.2s_cubic-bezier(0.22,1,0.36,1)_0.4s_both]">
                 {heroContent.lastName}
               </span>
             </span>

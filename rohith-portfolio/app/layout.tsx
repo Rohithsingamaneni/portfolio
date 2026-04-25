@@ -27,12 +27,12 @@ const themeScript = `
   (function () {
     try {
       var theme = localStorage.getItem("portfolio-theme");
-      var resolved = theme === "light" ? "light" : "dark";
+      var resolved = theme === "dark" ? "dark" : "light";
       document.documentElement.dataset.theme = resolved;
       document.documentElement.style.colorScheme = resolved;
     } catch (error) {
-      document.documentElement.dataset.theme = "dark";
-      document.documentElement.style.colorScheme = "dark";
+      document.documentElement.dataset.theme = "light";
+      document.documentElement.style.colorScheme = "light";
     }
   })();
 `;
@@ -48,7 +48,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${plusJakartaSans.variable} ${ibmPlexMono.variable}`}
     >
-      <body className="antialiased selection:bg-[var(--color-selection)] selection:text-[var(--color-selection-text)]">
+      <body
+        className="antialiased selection:bg-[var(--color-selection)] selection:text-[var(--color-selection-text)]"
+        suppressHydrationWarning
+      >
         <Script
           id="theme-init"
           strategy="beforeInteractive"
